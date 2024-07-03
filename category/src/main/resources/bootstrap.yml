@@ -1,0 +1,28 @@
+server:
+  port: 8084
+spring:
+  application:
+    name: category-service
+  datasource:
+    username: root
+    password: 123
+    url: jdbc:mysql://localhost:3306/vueblog2?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  session:
+    store-type: redis
+  redis:
+    host: localhost
+    port: 6379
+  cloud:
+    nacos:
+      config:
+        server-addr: localhost:8848
+        file-extension: yaml
+      discovery:
+        server-addr: localhost:8848
+mybatis:
+  configuration:
+    logImpl: org.apache.ibatis.logging.stdout.StdOutImpl
+logging:
+  level:
+    root: info

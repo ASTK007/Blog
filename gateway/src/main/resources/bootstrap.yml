@@ -1,0 +1,33 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    nacos:
+      config:
+        server-addr: localhost:8848
+        file-extension: yaml
+      discovery:
+        server-addr: localhost:8848
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: article
+          uri: lb://article-service
+          predicates:
+            - Path=/admin/article/**,/article/**
+        - id: category
+          uri: lb://category-service
+          predicates:
+            - Path=/admin/category/**
+        - id: user
+          uri: lb://user-service
+          predicates:
+            - Path=/admin/user/**,/admin/roles,/currentUserName,/currentUserId,/currentUserEmail,/isAdmin,/updateUserEmail
+        - id: security
+          uri: lb://security-service
+          predicates:
+            - Path=/login,/login_error,/login_success,/login_page,/reg,/logout

@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./init/vueblog.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./init/mysql.cnf:/etc/mysql/conf.d/init.cnf
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 3s
+      timeout: 15s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./init/redis.conf:/etc/redis/redis.conf
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 3s
+      timeout: 15s
+      retries: 5
+
+  nacos:
+    image: nacos/nacos-server:latest-slim
+    environment:
+      MODE: standalone
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+
+  article:
+    build:
+      context: ./article
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - NACOS_SERVER=nacos:8848
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8085:8085"
+    entrypoint: ["sh", "-c", "sleep 10 && java -jar /app/article.jar"]
+
+  category:
+    build:
+      context: ./category
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - NACOS_SERVER=nacos:8848
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8084:8084"
+    entrypoint: ["sh", "-c", "sleep 10 && java -jar  /app/category.jar"]
+
+  user:
+    build:
+      context: ./user
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - NACOS_SERVER=nacos:8848
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+    entrypoint: ["sh", "-c", "sleep 10 && java -jar /app/user.jar"]
+
+  security:
+    build:
+      context: ./security
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - NACOS_SERVER=nacos:8848
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8083:8083"
+    entrypoint: ["sh", "-c", "sleep 10 && java -jar /app/security.jar"]
+
+  gateway:
+    build:
+      context: ./gateway
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - NACOS_SERVER=nacos:8848
+    ports:
+      - "8081:8081"
+    entrypoint: ["sh", "-c", "sleep 20 && java -jar /app/gateway.jar"]
+
+volumes:
+  mysql-data:
+  redis-data:
